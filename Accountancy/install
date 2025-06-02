@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Function to display a usage message
+usage() {
+  echo "Usage: $0 <new_project_name>"
+  exit 1
+}
+
+# Check if the new project name is provided
+if [ -z "$1" ]; then
+  usage
+fi
+
+NEW_PROJECT_NAME=$1
+
+if [ -d $NEW_PROJECT_NAME ]; then
+  echo "The directory $NEW_PROJECT_NAME already exists."
+  exit 1;
+fi
+
+# check if larafast-installer directory exists remove it
+
+if [ -d "larafast-installer" ]; then
+  rm -rf larafast-installer
+fi
+
+git clone https://github.com/karakhanyans-tools/installer.git larafast-installer
+
+cd larafast-installer
+
+composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --quiet
+php artisan larafast:install $NEW_PROJECT_NAME
