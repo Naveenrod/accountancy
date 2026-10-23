@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Services\Accounting\AccountingProviders;
 use Livewire\Component;
 
 class Clientlist extends Component
@@ -128,21 +129,40 @@ class Clientlist extends Component
             'sage' => 'In Progress',
         ],
     ];
-    
 
-    public function syncClient($clientId, $service)
+    public $message = null;
+
+    public function pushContact($clientId, $service, AccountingProviders $providers)
     {
-        // This is where you'd implement the actual API call to sync the client
-        // For now, we'll just simulate the process
-        $statuses = ['Not Started', 'In Progress', 'Completed', 'Failed'];
-        $newStatus = $statuses[array_rand($statuses)];
-        
-        $clientIndex = array_search($clientId, array_column($this->clients, 'id'));
-        $this->clients[$clientIndex][$service] = $newStatus;
+        $index = $this->findClient($clientId, $service, $providers);
+        $result = $providers->get($service)->pushContact($this->clients[$index]);
+
+        $this->clients[$index][$service] = $result->successful ? 'Completed' : 'Failed';
+        $this->message = $result->message;
     }
 
-    public function render()
+    public function pullFinancials($clientId, $service, AccountingProviders $providers)
     {
-        return view('livewire.clientlist')->layout('livewire.app-layout');
+        $index = $this->findClient($clientId, $service, $providers);
+        $result = $providers->get($service)->pullFinancials($this->clients[$index]);
+
+        if ($result->successful) {
+            $this->clients[$index]['financials'][$service] = $result->data;
+        }
+        $this->message = $result->message;
+    }
+
+    private function findClient($clientId, $service, AccountingProviders $providers)
+    {
+        $index = array_search($clientId, array_column($this->clients, 'id'));
+
+        abort_if($index === false || ! $providers->has($service), 404);
+
+        return $index;
+    }
+
+    public function render(AccountingProviders $providers)
+    {
+        return view('livewire.clientlist', ['services' => $providers->names()])->layout('livewire.app-layout');
     }
 }
