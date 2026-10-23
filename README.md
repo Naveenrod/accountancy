@@ -6,11 +6,16 @@ It's built with [Laravel 11](https://laravel.com) and [Livewire 3](https://livew
 
 ## What it does
 
-The app is a prototype. Client data is hard-coded and syncing with the accounting software is a placeholder: nothing is sent to or read from Xero, QuickBooks or Sage yet. So far it has:
+The app is a prototype: syncing with the accounting software is a placeholder, so nothing is sent to or read from Xero, QuickBooks or Sage yet. So far it has:
 
-- **Client list** (`/clients`, `App\Livewire\Clientlist`): a table of 15 sample clients with a sync status for each of Xero, QuickBooks and Sage (`Not Started`, `In Progress`, `Completed` or `Failed`).
+- **Client list** (`/clients`, `App\Livewire\Clientlist`): your clients with a sync status for each of Xero, QuickBooks and Sage (`Not Started`, `In Progress`, `Completed` or `Failed`). It can be searched by name or email and shows 10 clients per page.
+- **Add, edit and delete clients** (`/clients/create`, `/clients/{id}/edit`, `App\Livewire\ClientForm`). Each client needs a name and a unique email.
 - **Push contact**: sends a client to the accounting software as a contact. For now it always succeeds and marks that service `Completed`.
 - **Pull invoices**: fetches a client's invoices and outstanding balance. For now it returns made-up figures, which are shown under the status.
+
+Clients are stored in the `clients` table. Each client has one row per service in `client_syncs`, holding the status, the last pulled invoice count and balance, and when it was last synced.
+
+![Client list](docs/screenshots/1-client-list.png)
 - **Homepage** (`/`, `App\Livewire\Homepage`) and a collapsible **navigation bar** (`App\Livewire\NavigatorBar`).
 
 ## How syncing is wired
@@ -22,9 +27,11 @@ Each accounting service is a class that implements `App\Services\Accounting\Acco
 ```
 Accountancy/
 ├── app/
-│   ├── Livewire/              # Clientlist, Homepage, NavigatorBar, AppLayout
+│   ├── Livewire/              # Clientlist, ClientForm, Homepage, NavigatorBar, AppLayout
+│   ├── Models/                # Client, ClientSync, User
 │   └── Services/Accounting/   # AccountingProvider interface, PlaceholderProvider
 ├── config/accounting.php      # Which services exist and which class each uses
+├── database/seeders/          # ClientSeeder: 15 sample clients
 ├── resources/views/livewire/  # Page layout and component views (Tailwind CSS)
 ├── routes/web.php             # / and /clients
 └── tests/Feature/             # Page and sync tests
@@ -32,7 +39,6 @@ Accountancy/
 
 ## Current limitations
 
-- Clients are stored in a hard-coded array, not the database, so changes are lost when the page reloads.
 - Push contact and Pull invoices are placeholders (see above).
 - There are no user accounts or logins yet.
 
@@ -53,7 +59,7 @@ npm run build
 cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite
-php artisan migrate
+php artisan migrate --seed   # --seed adds the 15 sample clients
 php artisan serve
 ```
 
