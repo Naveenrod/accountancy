@@ -10,6 +10,11 @@ class NavigatorBar extends Component
 
     public $isOpen = true;
 
+    public function mount()
+    {
+        $this->currentPage = request()->route()?->getName() ?? 'home';
+    }
+
     public function setPage($page)
     {
         $this->currentPage = $page;
