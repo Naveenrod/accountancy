@@ -13,6 +13,8 @@ The app is a prototype: syncing with the accounting software is a placeholder, s
 - **Push contact**: sends a client to the accounting software as a contact. For now it always succeeds and marks that service `Completed`.
 - **Pull invoices**: fetches a client's invoices and outstanding balance. For now it returns made-up figures, which are shown under the status.
 
+- **Login**: every page needs you to be logged in. There's no sign-up page; accounts are created with `php artisan app:create-user`. After 5 wrong passwords for an email, login is locked for a minute.
+
 Clients are stored in the `clients` table. Each client has one row per service in `client_syncs`, holding the status, the last pulled invoice count and balance, and when it was last synced.
 
 ![Client list](docs/screenshots/1-client-list.png)
@@ -27,7 +29,8 @@ Each accounting service is a class that implements `App\Services\Accounting\Acco
 ```
 Accountancy/
 ├── app/
-│   ├── Livewire/              # Clientlist, ClientForm, Homepage, NavigatorBar, AppLayout
+│   ├── Console/Commands/      # CreateUser (app:create-user)
+│   ├── Livewire/              # Clientlist, ClientForm, Login, Homepage, NavigatorBar, AppLayout
 │   ├── Models/                # Client, ClientSync, User
 │   └── Services/Accounting/   # AccountingProvider interface, PlaceholderProvider
 ├── config/accounting.php      # Which services exist and which class each uses
@@ -40,7 +43,8 @@ Accountancy/
 ## Current limitations
 
 - Push contact and Pull invoices are placeholders (see above).
-- There are no user accounts or logins yet.
+- It's built for one user: there are no teams, roles or per-user client lists.
+- There's no "forgot password" page. To reset a password, create a new account with `app:create-user` (or change it with `php artisan tinker`).
 
 ## Requirements
 
@@ -60,10 +64,11 @@ cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite
 php artisan migrate --seed   # --seed adds the 15 sample clients
+php artisan app:create-user  # asks for your name, email and password
 php artisan serve
 ```
 
-Then open http://127.0.0.1:8000. Run the tests with `php artisan test`.
+Then open http://127.0.0.1:8000 and log in. Run the tests with `php artisan test`.
 
 ## Tech stack
 
