@@ -12,7 +12,7 @@ class NavigatorBar extends Component
 
     public function mount()
     {
-        $this->currentPage = request()->route()?->getName() ?? 'home';
+        $this->currentPage = str_starts_with(request()->route()?->getName() ?? '', 'client') ? 'clientlist' : 'home';
     }
 
     public function setPage($page)

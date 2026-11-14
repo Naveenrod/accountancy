@@ -6,12 +6,38 @@ It's built with [Laravel 11](https://laravel.com) and [Livewire 3](https://livew
 
 ## What it does
 
-The app is a prototype. Client data is hard-coded and syncing with the accounting software is a placeholder: nothing is sent to or read from Xero, QuickBooks or Sage yet. So far it has:
+The app is a prototype: syncing with the accounting software is a placeholder, so nothing is sent to or read from Xero, QuickBooks or Sage yet. So far it has:
 
-- **Client list** (`/clients`, `App\Livewire\Clientlist`): a table of 15 sample clients with a sync status for each of Xero, QuickBooks and Sage (`Not Started`, `In Progress`, `Completed` or `Failed`).
+- **Login**: every page needs you to be logged in. There's no sign-up page; accounts are created with `php artisan app:create-user`. After 5 wrong passwords for an email, login is locked for a minute.
+- **Client list** (`/clients`, `App\Livewire\Clientlist`): your clients with a sync status for each of Xero, QuickBooks and Sage (`Not Started`, `In Progress`, `Completed` or `Failed`). It can be searched by name or email and shows 10 clients per page.
+- **Add, edit and delete clients** (`/clients/create`, `/clients/{id}/edit`, `App\Livewire\ClientForm`). Each client needs a name and a unique email.
 - **Push contact**: sends a client to the accounting software as a contact. For now it always succeeds and marks that service `Completed`.
 - **Pull invoices**: fetches a client's invoices and outstanding balance. For now it returns made-up figures, which are shown under the status.
 - **Homepage** (`/`, `App\Livewire\Homepage`) and a collapsible **navigation bar** (`App\Livewire\NavigatorBar`).
+
+Clients are stored in the `clients` table. Each client has one row per service in `client_syncs`, holding the status, the last pulled invoice count and balance, and when it was last synced.
+
+## Screenshots
+
+**Client list**: 10 clients per page, with a sync status for each service.
+
+![Client list](docs/screenshots/1-client-list.png)
+
+**After Push contact and Pull invoices**: the status, invoice figures and last sync time are saved per client and service.
+
+![Sync actions](docs/screenshots/2-sync-actions.png)
+
+**Search** by name or email.
+
+![Search](docs/screenshots/3-search.png)
+
+**Add client**, with validation.
+
+![Add client form with validation errors](docs/screenshots/4-add-client-validation.png)
+
+**Login**.
+
+![Login page](docs/screenshots/5-login.png)
 
 ## How syncing is wired
 
@@ -22,9 +48,12 @@ Each accounting service is a class that implements `App\Services\Accounting\Acco
 ```
 Accountancy/
 ├── app/
-│   ├── Livewire/              # Clientlist, Homepage, NavigatorBar, AppLayout
+│   ├── Console/Commands/      # CreateUser (app:create-user)
+│   ├── Livewire/              # Clientlist, ClientForm, Login, Homepage, NavigatorBar, AppLayout
+│   ├── Models/                # Client, ClientSync, User
 │   └── Services/Accounting/   # AccountingProvider interface, PlaceholderProvider
 ├── config/accounting.php      # Which services exist and which class each uses
+├── database/seeders/          # ClientSeeder: 15 sample clients
 ├── resources/views/livewire/  # Page layout and component views (Tailwind CSS)
 ├── routes/web.php             # / and /clients
 └── tests/Feature/             # Page and sync tests
@@ -32,9 +61,9 @@ Accountancy/
 
 ## Current limitations
 
-- Clients are stored in a hard-coded array, not the database, so changes are lost when the page reloads.
 - Push contact and Pull invoices are placeholders (see above).
-- There are no user accounts or logins yet.
+- It's built for one user: there are no teams, roles or per-user client lists.
+- There's no "forgot password" page. To reset a password, create a new account with `app:create-user` (or change it with `php artisan tinker`).
 
 ## Requirements
 
@@ -53,11 +82,12 @@ npm run build
 cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite
-php artisan migrate
+php artisan migrate --seed   # --seed adds the 15 sample clients
+php artisan app:create-user  # asks for your name, email and password
 php artisan serve
 ```
 
-Then open http://127.0.0.1:8000. Run the tests with `php artisan test`.
+Then open http://127.0.0.1:8000 and log in. Run the tests with `php artisan test`.
 
 ## Tech stack
 
