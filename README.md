@@ -6,39 +6,70 @@ It's built with [Laravel 11](https://laravel.com) and [Livewire 3](https://livew
 
 ## What it does
 
-The app is a prototype. Client data is hard-coded and the sync to accounting software is simulated. So far it has:
+The app is a prototype: syncing with the accounting software is a placeholder, so nothing is sent to or read from Xero, QuickBooks or Sage yet. So far it has:
 
-- **Client list** (`App\Livewire\Clientlist`): a table of 15 sample clients (name, email) with a sync status for each of Xero, QuickBooks and Sage. A status is `Not Started`, `In Progress`, `Completed` or `Failed`.
-- **Sync action** (`Clientlist::syncClient($clientId, $service)`): a placeholder for the real API integration. For now it gives the client's status for that service a random value.
-- **Homepage** (`App\Livewire\Homepage`): the landing page.
-- **Navigation bar** (`App\Livewire\NavigatorBar`): a collapsible menu that switches between pages by redirecting to named routes.
-- **Layout** (`App\Livewire\AppLayout`): the shared page layout that the other components render into.
+- **Login**: every page needs you to be logged in. There's no sign-up page; accounts are created with `php artisan app:create-user`. After 5 wrong passwords for an email, login is locked for a minute.
+- **Client list** (`/clients`, `App\Livewire\Clientlist`): your clients with a sync status for each of Xero, QuickBooks and Sage (`Not Started`, `In Progress`, `Completed` or `Failed`). It can be searched by name or email and shows 10 clients per page.
+- **Add, edit and delete clients** (`/clients/create`, `/clients/{id}/edit`, `App\Livewire\ClientForm`). Each client needs a name and a unique email.
+- **Push contact**: sends a client to the accounting software as a contact. For now it always succeeds and marks that service `Completed`.
+- **Pull invoices**: fetches a client's invoices and outstanding balance. For now it returns made-up figures, which are shown under the status.
+- **Homepage** (`/`, `App\Livewire\Homepage`) and a collapsible **navigation bar** (`App\Livewire\NavigatorBar`).
+
+Clients are stored in the `clients` table. Each client has one row per service in `client_syncs`, holding the status, the last pulled invoice count and balance, and when it was last synced.
+
+## Screenshots
+
+**Client list**: 10 clients per page, with a sync status for each service.
+
+![Client list](docs/screenshots/1-client-list.png)
+
+**After Push contact and Pull invoices**: the status, invoice figures and last sync time are saved per client and service.
+
+![Sync actions](docs/screenshots/2-sync-actions.png)
+
+**Search** by name or email.
+
+![Search](docs/screenshots/3-search.png)
+
+**Add client**, with validation.
+
+![Add client form with validation errors](docs/screenshots/4-add-client-validation.png)
+
+**Login**.
+
+![Login page](docs/screenshots/5-login.png)
+
+## How syncing is wired
+
+Each accounting service is a class that implements `App\Services\Accounting\AccountingProvider`, which has two methods: `pushContact()` and `pullFinancials()`. `config/accounting.php` lists the services and the class each one uses. All three use `PlaceholderProvider` for now. To build a real integration, write a class that implements the interface and point that service at it in the config.
 
 ## Project structure
 
 ```
 Accountancy/
 ├── app/
-│   ├── Livewire/          # AppLayout, Clientlist, Homepage, NavigatorBar
-│   ├── Models/User.php    # Default Laravel user model
-│   └── Providers/
-├── bootstrap/
-├── config/                # Laravel config, including livewire.php
-├── database/              # Default users and cache migrations, factory and seeder
-├── composer.json
-└── install                # Larafast installer script
+│   ├── Console/Commands/      # CreateUser (app:create-user)
+│   ├── Livewire/              # Clientlist, ClientForm, Login, Homepage, NavigatorBar, AppLayout
+│   ├── Models/                # Client, ClientSync, User
+│   └── Services/Accounting/   # AccountingProvider interface, PlaceholderProvider
+├── config/accounting.php      # Which services exist and which class each uses
+├── database/seeders/          # ClientSeeder: 15 sample clients
+├── resources/views/livewire/  # Page layout and component views (Tailwind CSS)
+├── routes/web.php             # / and /clients
+└── tests/Feature/             # Page and sync tests
 ```
 
 ## Current limitations
 
-- The repository has **no `routes/`, `resources/` (Blade views), `public/` or `tests/` directories**. The Livewire components refer to views (`livewire.clientlist`, `livewire.homepage`, `livewire.navigator-bar`, `livewire.app-layout`) and named routes that aren't committed, so the app won't run until they're added.
-- Clients are stored in a hard-coded array, not the database.
-- There's no real integration with Xero, QuickBooks or Sage yet: `syncClient` only picks a random status.
+- Push contact and Pull invoices are placeholders (see above).
+- It's built for one user: there are no teams, roles or per-user client lists.
+- There's no "forgot password" page. To reset a password, create a new account with `app:create-user` (or change it with `php artisan tinker`).
 
 ## Requirements
 
 - PHP 8.2 or later
 - Composer
+- Node.js and npm (to build the CSS and JavaScript)
 - SQLite (the default database in `.env.example`)
 
 ## Getting started
@@ -46,14 +77,17 @@ Accountancy/
 ```bash
 cd Accountancy
 composer install
+npm install
+npm run build
 cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite
-php artisan migrate
+php artisan migrate --seed   # --seed adds the 15 sample clients
+php artisan app:create-user  # asks for your name, email and password
 php artisan serve
 ```
 
-> The app won't serve pages until the missing routes and views are added (see [Current limitations](#current-limitations)).
+Then open http://127.0.0.1:8000 and log in. Run the tests with `php artisan test`.
 
 ## Tech stack
 
@@ -62,6 +96,7 @@ php artisan serve
 | PHP | ^8.2 |
 | Laravel | ^11.9 |
 | Livewire | ^3.5 |
+| Tailwind CSS | ^3.4 |
 | PHPUnit | ^11.0 |
 
 ## License
