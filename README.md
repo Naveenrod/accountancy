@@ -8,17 +8,36 @@ It's built with [Laravel 11](https://laravel.com) and [Livewire 3](https://livew
 
 The app is a prototype: syncing with the accounting software is a placeholder, so nothing is sent to or read from Xero, QuickBooks or Sage yet. So far it has:
 
+- **Login**: every page needs you to be logged in. There's no sign-up page; accounts are created with `php artisan app:create-user`. After 5 wrong passwords for an email, login is locked for a minute.
 - **Client list** (`/clients`, `App\Livewire\Clientlist`): your clients with a sync status for each of Xero, QuickBooks and Sage (`Not Started`, `In Progress`, `Completed` or `Failed`). It can be searched by name or email and shows 10 clients per page.
 - **Add, edit and delete clients** (`/clients/create`, `/clients/{id}/edit`, `App\Livewire\ClientForm`). Each client needs a name and a unique email.
 - **Push contact**: sends a client to the accounting software as a contact. For now it always succeeds and marks that service `Completed`.
 - **Pull invoices**: fetches a client's invoices and outstanding balance. For now it returns made-up figures, which are shown under the status.
-
-- **Login**: every page needs you to be logged in. There's no sign-up page; accounts are created with `php artisan app:create-user`. After 5 wrong passwords for an email, login is locked for a minute.
+- **Homepage** (`/`, `App\Livewire\Homepage`) and a collapsible **navigation bar** (`App\Livewire\NavigatorBar`).
 
 Clients are stored in the `clients` table. Each client has one row per service in `client_syncs`, holding the status, the last pulled invoice count and balance, and when it was last synced.
 
+## Screenshots
+
+**Client list**: 10 clients per page, with a sync status for each service.
+
 ![Client list](docs/screenshots/1-client-list.png)
-- **Homepage** (`/`, `App\Livewire\Homepage`) and a collapsible **navigation bar** (`App\Livewire\NavigatorBar`).
+
+**After Push contact and Pull invoices**: the status, invoice figures and last sync time are saved per client and service.
+
+![Sync actions](docs/screenshots/2-sync-actions.png)
+
+**Search** by name or email.
+
+![Search](docs/screenshots/3-search.png)
+
+**Add client**, with validation.
+
+![Add client form with validation errors](docs/screenshots/4-add-client-validation.png)
+
+**Login**.
+
+![Login page](docs/screenshots/5-login.png)
 
 ## How syncing is wired
 
